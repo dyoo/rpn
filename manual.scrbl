@@ -1,5 +1,7 @@
 #lang scribble/manual
 
+
+
 @title{Writing an RPN Calculator in Whalesong}
 @author+email["dyoo@hashcollision.org"]{Danny Yoo}
 
@@ -20,8 +22,7 @@ Let's try coding that up.
 
 
 @codeblock|{
-#lang whalesong/base
-
+#lang planet dyoo/whalesong
 ;; calc is a model of the calculator .
 (define-struct calc (stack ;; (listof number)
                      onscreen ;; (listof number)
@@ -40,3 +41,18 @@ Let's try coding that up.
               [else
                (append (calc-onscreen calc) (list digit))])))
 }|
+
+
+Of course, we should write test cases!  Let's make sure we can
+start inserting digits into this calculator.
+@racketblock[
+(check-expect (insert-digit THE-EMPTY-CALCULATOR 1)
+              (make-calc '() '(1)))
+
+(check-expect (insert-digit THE-EMPTY-CALCULATOR 0)
+              (make-calc '() '(0)))
+
+(check-expect (insert-digit (insert-digit THE-EMPTY-CALCULATOR 1)
+                            2)
+              (make-calc '() '(1 2)))
+]
