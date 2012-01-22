@@ -1,37 +1,56 @@
 #lang scribble/manual
-@(require (for-label (planet dyoo/whalesong/lang/whalesong)))
 
 
-@title{Writing an RPN Calculator in Whalesong}
+@title{Writing an RPN Calculator}
 @author+email["Danny Yoo" "dyoo@hashcollision.org"]
 
 Let's try to make a simple
 @link["http://en.wikipedia.org/wiki/Reverse_Polish_notation"]{Reverse
 Polish Notation} (RPN) calculator.  It's one of those toy
-examples that are, at the very least, slightly more interesting
+examples that is, at the very least, slightly more interesting
 than
 @link["http://en.wikipedia.org/wiki/Factorial"]{@tt{factorial}},
-so let's see what it looks like in Whalesong.
+so let's see what it looks like in Racket/Whalesong.
 
+
+@;; Should we mention http://programmingpraxis.com/2009/02/19/rpn-calculator/ at all?
 
 
 @section{The Model}
-First, let's talk about a model of an RPN calculator.  There's a
-notion of what digits are showing on the screen of the
-calculator, as well as some notion of the calculator's stack.
-Let's try coding that up.
+
+When we start pressing numbers on the calculator, it changes the
+displayed number on-screen by inserting digits at the end.
+There's also some hidden state in the form of the numeric stack.
+Let's first use a structure to hold two pieces of a calculator's
+state.  Create a new file called @filepath{calc.rkt}, and start
+editing it.
 
 @filebox["calc.rkt"]{
 @codeblock|{
 #lang planet dyoo/whalesong
-;; calc is a model of the calculator .
+;; calc is a model of the calculator.
 (define-struct calc (stack ;; (listof number)
                      onscreen ;; (listof number)
                      ))
+}|
+}
 
-(define THE-EMPTY-CALCULATOR
+
+What would be an example of a @racket[calc]?  How about a
+calculator's initial state, when the stack is empty, and there's
+a zero showing on-screen?  Let's add more to @filepath{calc.rkt}.
+
+@codeblock|{
+(define INIT-CALC
   (make-calc '() '(0)))
+}|
 
+
+Ok.  Let's try modelling the number-pressing behavior next.
+Every number we press should adding more digits to the on-screen
+display.  We'll have a function called @racket[insert-digit] to
+do this.
+@codeblock|{
 ;; insert-digit: calc number -> calc
 ;; Enters a digit on the calculator
 (define (insert-digit calc digit)
@@ -42,21 +61,19 @@ Let's try coding that up.
               [else
                (append (calc-onscreen calc) (list digit))])))
 }|
-}
 
-
-Wait!  We should write test cases, of course!  Let's make sure we
+But we should write test cases, of course!  Let's make sure we
 can start inserting digits into this calculator.  Let's add some
 tests to the end of @filepath{calc.rkt}.
 
 @racketblock[
-(check-expect (insert-digit THE-EMPTY-CALCULATOR 1)
+(check-expect (insert-digit INIT-CALC 1)
               (make-calc '() '(1)))
 
-(check-expect (insert-digit THE-EMPTY-CALCULATOR 0)
+(check-expect (insert-digit INIT-CALC 0)
               (make-calc '() '(0)))
 
-(check-expect (insert-digit (insert-digit THE-EMPTY-CALCULATOR 1)
+(check-expect (insert-digit (insert-digit INIT-CALC 1)
                             2)
               (make-calc '() '(1 2)))
 ]
@@ -64,17 +81,19 @@ tests to the end of @filepath{calc.rkt}.
 If we run this, we should see that our test cases are running fine
 so far.
 
-But... hmmm... It's a little awkward to keep nesting calls to
+But... hmmm... it's a little awkward to keep nesting calls to
 @racket[insert-digit] for our test cases.  Let's write a
 quick-and-dirty harness to make it easier to press multiple
 @emph{commands} into our calculator.  Let's call it
 @racket[press]:
 
+@margin-note{We'll amend our notion of what a @emph{command} is, in a moment.}
 @codeblock|{
 ;; For the moment, a command is simply a number.
 
 ;; press: calc (listof command) -> calc
-;; Convenience function doing multiple commands into the calculator at once.
+;; Convenience function doing multiple commands
+;; into the calculator at once.
 (define (press calc commands)
   (foldl (lambda (digit calc)
            (insert-digit calc digit))
@@ -86,14 +105,14 @@ Once we have @racket[press], we can use it for a few more tests:
 @codeblock|{
 ;; If we press zero multiple times before starting to add numbers in,
 ;; nothing should show up on the display...
-(check-expect (press THE-EMPTY-CALCULATOR
+(check-expect (press INIT-CALC
                              '(0 0 3 1 4 1 5 9 2 6))
               (make-calc '()
                          '(3 1 4 1 5 9 2 6)))
 
 ;; but of course, zero should be significant once we start
 ;; entering numbers.
-(check-expect (press THE-EMPTY-CALCULATOR
+(check-expect (press INIT-CALC
                              '(0 0 3 0 0))
               (make-calc '()
                          '(3 0 0)))
@@ -137,18 +156,18 @@ number onscreen and places it onto the stack.
                    (calc-stack calc))
              '(0)))
 
-(check-expect (push-stack THE-EMPTY-CALCULATOR)
+(check-expect (push-stack INIT-CALC)
               (make-calc '(0)
                          '(0)))
 
-(check-expect (push-stack (push-stack THE-EMPTY-CALCULATOR))
+(check-expect (push-stack (push-stack INIT-CALC))
               (make-calc '(0 0)
                          '(0)))
 
 (check-expect (push-stack
                (press
                 (push-stack
-                 (press THE-EMPTY-CALCULATOR '(3 1 4)))
+                 (press INIT-CALC '(3 1 4)))
                 '(4 5 6)))
               (make-calc '(456 314)
                          '(0)))
@@ -162,6 +181,7 @@ with multiple uses of @racket[insert-digit] by defining a
 things like @racket['enter].  We'll revise our definition of
 @racket[press] to work on both digits and the @racket['enter]
 command.
+
 
 @codeblock|{
 ;; A command is a number, or the symbol 'enter.
@@ -179,4 +199,15 @@ command.
              (error 'press "Unknown command: ~e" cmd)]))
          calc
          commands))
+
+;; We rewrite the test to use 'enter:
+(check-expect (press INIT-CALC '(3 1 4 enter 4 5 6 enter))
+              (make-calc '(456 314)
+                         '(0)))
 }|
+
+Ok, that's a lot easier to read.  In fact, there's something
+funny happening to @racket[press]: it's beginning to look like
+more than a simple test harness!  If we look at it in a twisted
+enough view, we might say that it's an @emph{interpreter} for a
+very simple language.

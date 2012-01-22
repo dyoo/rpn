@@ -10,7 +10,7 @@
                      onscreen ;; (listof number)
                      ))
 
-(define THE-EMPTY-CALCULATOR
+(define INIT-CALC
   (make-calc '() '(0)))
 
 ;; insert-digit: calc number -> calc
@@ -23,13 +23,13 @@
               [else
                (append (calc-onscreen calc) (list digit))])))
 
-(check-expect (insert-digit THE-EMPTY-CALCULATOR 1)
+(check-expect (insert-digit INIT-CALC 1)
               (make-calc '() '(1)))
 
-(check-expect (insert-digit THE-EMPTY-CALCULATOR 0)
+(check-expect (insert-digit INIT-CALC 0)
               (make-calc '() '(0)))
 
-(check-expect (insert-digit (insert-digit THE-EMPTY-CALCULATOR 1)
+(check-expect (insert-digit (insert-digit INIT-CALC 1)
                             2)
               (make-calc '() '(1 2)))
 
@@ -54,14 +54,14 @@
 
 ;; If we press zero multiple times before starting to add numbers in,
 ;; nothing should show up on the display...
-(check-expect (press THE-EMPTY-CALCULATOR
+(check-expect (press INIT-CALC
                              '(0 0 3 1 4 1 5 9 2 6))
               (make-calc '()
                          '(3 1 4 1 5 9 2 6)))
 
 ;; but of course, zero should be significant once we start
 ;; entering numbers.
-(check-expect (press THE-EMPTY-CALCULATOR
+(check-expect (press INIT-CALC
                              '(0 0 3 0 0))
               (make-calc '()
                          '(3 0 0)))
@@ -96,18 +96,24 @@
                    (calc-stack calc))
              '(0)))
 
-(check-expect (push-stack THE-EMPTY-CALCULATOR)
+(check-expect (push-stack INIT-CALC)
               (make-calc '(0)
                          '(0)))
 
-(check-expect (push-stack (push-stack THE-EMPTY-CALCULATOR))
+(check-expect (push-stack (push-stack INIT-CALC))
               (make-calc '(0 0)
                          '(0)))
 
 (check-expect (push-stack
                (press
                 (push-stack
-                 (press THE-EMPTY-CALCULATOR '(3 1 4)))
+                 (press INIT-CALC '(3 1 4)))
                 '(4 5 6)))
               (make-calc '(456 314)
                          '(0)))
+
+;; We rewrite the test to use 'enter:
+(check-expect (press INIT-CALC '(3 1 4 enter 4 5 6 enter))
+              (make-calc '(456 314)
+                         '(0)))
+
