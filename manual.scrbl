@@ -207,7 +207,9 @@ command.
 }|
 
 Ok, that's a lot easier to read.  In fact, there's something
-funny happening to @racket[press]: it's beginning to look like
-more than a simple test harness!  If we look at it in a twisted
-enough view, we might say that it's an @emph{interpreter} for a
-very simple language.
+funny happening to @racket[press]: it's beginning to look more
+than a simple test harness.  If we look at it with a twisted
+enough perspective, we might dare to call it an
+@emph{interpreter} for a very simple language.  Funny, that.
+
+
