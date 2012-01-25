@@ -88,7 +88,7 @@
               (make-calc '(456 314)
                          0))
 
-;; We rewrite the test to use 'push:
+;; We rewrite the ugly test to use 'push:
 (check-expect (press INIT-CALC '(3 1 4 push 4 5 6 push))
               (make-calc '(456 314)
                          0))

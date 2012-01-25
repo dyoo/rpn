@@ -78,6 +78,9 @@ tests to the end of @filepath{calc.rkt}.
 If we run this, we should see that our test cases are running fine
 so far.
 
+
+@subsection{Pressed into service}
+
 But... hmmm... it's a little awkward to keep nesting calls to
 @racket[insert-digit] for our test cases.  Let's write a
 quick-and-dirty harness to make it easier to press multiple
@@ -116,9 +119,12 @@ Once we have @racket[press], we can use it for a few more tests:
 }|
 
 
-Ok, this looks good so far.  Let's add functionality to
-@emph{push} a number into the stack.  Effectively, this will put
-the number in the @racket[calc-onscreen] into the list of values held in @racket[calc-stack].
+@subsection{Pushing}
+
+Let's add functionality to @emph{push} a number into the stack.
+Effectively, this will put the number in the
+@racket[calc-onscreen] into the list of values held in
+@racket[calc-stack].
 
 
 Here's an implementation of @racket[push-stack], which takes the
@@ -150,6 +156,10 @@ number onscreen and places it onto the stack.
                          0))
 }|
 
+
+
+@subsection{Revising press}
+
 The last test is somewhat ugly to read: we end up having to read
 how it works inside-out.  We tried to make it easy to write tests
 with multiple uses of @racket[insert-digit] by defining a
@@ -177,16 +187,68 @@ command.
          calc
          commands))
 
-;; We rewrite the test to use 'push:
+;; We rewrite the ugly test to use 'push:
 (check-expect (press INIT-CALC '(3 1 4 push 4 5 6 push))
               (make-calc '(456 314)
                          '(0)))
 }|
 
-Ok, that's a lot easier to read.  In fact, there's something
-funny happening to @racket[press]: it's beginning to look more
-than a simple test harness.  If we look at it with a twisted
-enough perspective, we might dare to call it an
-@emph{interpreter} for a very simple language.  Funny, that.
+Ok, our revised @racket[press] makes that test easier to read.
+In fact, there's something funny happening to @racket[press]:
+it's beginning to look more than a simple test harness.  If we
+look at it with a twisted enough perspective, we might dare to
+call it an @emph{interpreter} for a very simple language.
 
 
+We can get numbers into the calculator model.  Now we should
+modify the model to perform operations like addition,
+subtraction, multiplication, and division.
+
+@subsection{Error conditions}
+
+Before we tackle that, though, we should consider: what should
+happen under error conditions?  That is, what kind of Bad Things can
+happen when we perform a calculator operation?
+
+@itemize[
+
+@item{@emph{Arity error}: The stack may not have enough elements in it to perform an
+operation.}
+
+@item{@emph{Operator-specific error}: The operation itself might
+raise a problem.  Dividing by zero, for example, is a no-no.}
+
+]
+
+
+Rather than error out in an unexpected or undefined way, let's
+model the error as a part of the calculator's possible state.
+
+@; Let's include an operator to clear the error state from the calculator.
+
+
+@; TODO:
+@; 1. amending press so that it implicitly does a push when entering numbers
+@; and operations.  Requires a refinement of the model so can track this.
+
+@; Add more operations
+
+@subsection{Operations}
+
+
+@subsection{Lifting the tests}
+
+
+@subsection{Summary}
+
+
+@;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+@section{View}
+
+
+@;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+@section{Controller}
+
+
+@;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+@section{Deployment}
